@@ -1,0 +1,40 @@
+html {
+    margin: 0px;
+    padding: 0px;
+}
+
+body {
+    margin: 0px;
+    padding: 0px;
+}
+
+header {
+    margin: 0px;
+    padding: 0px;
+}
+
+.head-container {
+    margin: 0px;
+    padding: 0px;
+    height: 100px;
+    background-color: rgb(192, 127, 192);
+}
+
+.head-container h1 {
+    padding-top: 25px;
+    padding-left: 25px;
+    margin: 0px;
+}
+
+.table-bot, th, td{
+    padding: 10px;
+    border: 1px solid;
+}
+
+.table-bot, table {
+    border-collapse: collapse;
+}
+
+.main-container {
+    padding-left: 50px;
+}

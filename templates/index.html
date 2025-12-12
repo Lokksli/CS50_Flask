@@ -3,9 +3,67 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <title>Digital Twin</title>
 </head>
 <body>
-    <h1>Hello, World!</h1>
+    <header>
+        <div class="head-container">
+            <h1>
+                Gearheads monitoring
+            </h1>
+        </div>
+    </header>
+    <div class="main-container">
+        <h1>Bot 1</h1> 
+        <table class="table_bot">
+            <thead>
+                <tr>
+                    <th>Moving Speed</th>
+                    <th>Rotation</th>
+                    <th>Distance forward</th>
+                </tr>
+                <tr>
+                    <th>{{speedO}} c/s</th>
+                    <th>{{turnO}} d</th>
+                    <th>{{distanceO}} cm</th>
+                </tr>
+            </thead>
+        </table>
+
+    <h1>Bot 2</h1>
+        <table class="table_bot1">
+            <thead>
+                <tr>
+                    <th>Moving Speed</th>
+                    <th>Rotation</th>
+                    <th>Distance forward</th>
+                </tr>
+                <tr>
+                    <th>{{speedT}} c/s</th>
+                    <th>{{turnT}} d</th>
+                    <th>{{distanceT}} cm</th>
+                </tr>
+            </thead>
+        </table>
+
+        <h1>Bot 3</h1>
+        <table class="table_bot1">
+            <thead>
+                <tr>
+                    <th>Moving Speed</th>
+                    <th>Rotation</th>
+                    <th>Distance forward</th>
+                </tr>
+                <tr>
+                    <th>{{speedTH}} c/s</th>
+                    <th>{{turnTH}} d</th>
+                    <th>{{distanceTH}} cm</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+
+    
 </body>
 </html>
