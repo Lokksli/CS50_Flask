@@ -15,7 +15,9 @@
         </div>
     </header>
     <div class="main-container">
-        <h1>Bot 1</h1> 
+    {% for robot in robots %}
+        <h1>{{ robot.name }}</h1>
+
         <table class="table_bot">
             <thead>
                 <tr>
@@ -23,46 +25,18 @@
                     <th>Rotation</th>
                     <th>Distance forward</th>
                 </tr>
-                <tr>
-                    <th>{{speedO}} c/s</th>
-                    <th>{{turnO}} d</th>
-                    <th>{{distanceO}} cm</th>
-                </tr>
             </thead>
+            <tbody>
+                <tr>
+                    <td>{{ robot.speed }} c/s</td>
+                    <td>{{ robot.turn }} d</td>
+                    <td>{{ robot.distance }} cm</td>
+                </tr>
+            </tbody>
         </table>
+    {% endfor %}
+</div>
 
-    <h1>Bot 2</h1>
-        <table class="table_bot1">
-            <thead>
-                <tr>
-                    <th>Moving Speed</th>
-                    <th>Rotation</th>
-                    <th>Distance forward</th>
-                </tr>
-                <tr>
-                    <th>{{speedT}} c/s</th>
-                    <th>{{turnT}} d</th>
-                    <th>{{distanceT}} cm</th>
-                </tr>
-            </thead>
-        </table>
-
-        <h1>Bot 3</h1>
-        <table class="table_bot1">
-            <thead>
-                <tr>
-                    <th>Moving Speed</th>
-                    <th>Rotation</th>
-                    <th>Distance forward</th>
-                </tr>
-                <tr>
-                    <th>{{speedTH}} c/s</th>
-                    <th>{{turnTH}} d</th>
-                    <th>{{distanceTH}} cm</th>
-                </tr>
-            </thead>
-        </table>
-    </div>
 
     
 </body>

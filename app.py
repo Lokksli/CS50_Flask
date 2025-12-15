@@ -1,89 +1,78 @@
 from flask import Flask, render_template
 import sqlite3
-
+import serial
+import threading
 
 app = Flask(__name__)
 
-nameOne = "BLIND"
-speedOne = 10
-turnOne = 10
-distanceOne = 150 
+DB_NAME = "parameters.db"
 
-nameTwo = "FAST"
-speedTwo = 30
-turnTwo = 0
-distanceTwo = 100
-
-nameThird = "SMART"
-speedThird = 5
-turnThird = 12
-distanceThird = 80
-
+SERIAL_PORT = "COM5"
+BAUD_RATE = 9600
 
 def get_db():
-    # Opens a connection to the SQLite file each request
-    conn = sqlite3.connect("parameters.db")
+    conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
 
+def serial_listener():
+    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+    conn = get_db()
+    cursor = conn.cursor()
+
+    while True:
+        line = ser.readline().decode(errors="ignore").strip()
+        if not line:
+            continue
+
+        try:
+            name, speed, turn, distance = line.split(",")
+            speed = int(speed)
+            turn = int(turn)
+            distance = int(distance)
+
+            cursor.execute(
+                """
+                INSERT INTO robots (name, speed, turn, fdistance)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(name)
+                DO UPDATE SET
+                    speed = excluded.speed,
+                    turn = excluded.turn,
+                    fdistance = excluded.fdistance
+                """,
+                (name, speed, turn, distance)
+            )
+            conn.commit()
+            print("Updated:", name)
+
+        except ValueError:
+            print("Bad serial data:", line)
+
 @app.route("/")
-def hello():
-    nameOne = "BLIND"
-    speedOne = 10
-    turnOne = 10
-    distanceOne = 150 
+def index():
+    conn = get_db()
+    cursor = conn.cursor()
 
-    nameTwo = "FAST"
-    speedTwo = 30
-    turnTwo = 0
-    distanceTwo = 100
+    cursor.execute("SELECT name, speed, turn, fdistance FROM robots")
+    rows = cursor.fetchall()
 
-    nameThird = "SMART"
-    speedThird = 5
-    turnThird = 12
-    distanceThird = 80
-    with sqlite3.connect("parameters.db", check_same_thread=False) as conn:
-        cursor = conn.cursor()
+    robots = [
+        {
+            "name": row["name"],
+            "speed": row["speed"],
+            "turn": row["turn"],
+            "distance": row["fdistance"],
+        }
+        for row in rows
+    ]
 
-        # Insert only if not exists
-        cursor.execute("SELECT id FROM robots WHERE name = ?", (nameOne,))
-        if cursor.fetchone() is None:
-            cursor.execute(
-                "INSERT INTO robots (name, speed, turn, fdistance) VALUES (?, ?, ?, ?)",
-                (nameOne, speedOne, turnOne, distanceOne)
-            )
-        
-        cursor.execute("SELECT id FROM robots WHERE name = ?", (nameTwo,))
-        if cursor.fetchone() is None:
-            cursor.execute(
-                "INSERT INTO robots (name, speed, turn, fdistance) VALUES (?, ?, ?, ?)",
-                (nameTwo, speedTwo, turnTwo, distanceTwo)
-            )
-
-        cursor.execute("SELECT id FROM robots WHERE name = ?", (nameThird,))
-        if cursor.fetchone() is None:
-            cursor.execute(
-                "INSERT INTO robots (name, speed, turn, fdistance) VALUES (?, ?, ?, ?)",
-                (nameThird, speedThird, turnThird, distanceThird)
-            )
+    conn.close()
+    return render_template("index.html", robots=robots)
 
 
-        # Fetch data
-        cursor.execute("SELECT speed, turn, fdistance FROM robots WHERE name = ?", (nameOne,))
-        row = cursor.fetchone()
-        speedOne, turnOne, distanceOne = row
-
-        cursor.execute("SELECT speed, turn, fdistance FROM robots WHERE name = ?", (nameTwo,))
-        row2 = cursor.fetchone()
-        speedTwo, turnTwo, distanceTwo = row2
-
-        cursor.execute("SELECT speed, turn, fdistance FROM robots WHERE name = ?", (nameThird,))
-        row3 = cursor.fetchone()
-        speedThird, turnThird, distanceThird = row3
-
-    return render_template('index.html', speedO=speedOne, turnO=turnOne, distanceO=distanceOne, speedT=speedTwo, turnT=turnTwo, distanceT=distanceTwo, speedTH=speedThird, turnTH=turnThird, distanceTH=distanceThird)
-
-
-
-if __name__ == '__main__':
+if __name__ == "__main__":
+    threading.Thread(target=serial_listener, daemon=True).start()
     app.run(debug=True)
+
+
