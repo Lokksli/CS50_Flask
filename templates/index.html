@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <title>Digital Twin</title>
 </head>
+
 <body>
     <header>
         <div class="head-container">
@@ -15,29 +17,47 @@
         </div>
     </header>
     <div class="main-container">
-    {% for robot in robots %}
-        <h1>{{ robot.name }}</h1>
 
-        <table class="table_bot">
-            <thead>
-                <tr>
-                    <th>Moving Speed</th>
-                    <th>Rotation</th>
-                    <th>Distance forward</th>
-                </tr>
-            </thead>
-            <tbody>
-                <tr>
-                    <td>{{ robot.speed }} c/s</td>
-                    <td>{{ robot.turn }} d</td>
-                    <td>{{ robot.distance }} cm</td>
-                </tr>
-            </tbody>
-        </table>
-    {% endfor %}
-</div>
+    </div>
+    <script>
+        async function fetchRobots() {
+            try {
+                const response = await fetch('/robots_data');
+                const robots = await response.json();
 
+                const container = document.querySelector('.main-container');
+                container.innerHTML = '';
 
-    
+                robots.forEach(robot => {
+                    const tableHTML = `
+                        <h1>${robot.name}</h1>
+                        <table class = "table_bot"> 
+                            <thead>
+                                <tr>
+                                    <th>Moving Speed</th>
+                                    <th>Rotation</th>
+                                    <th>Distance forward</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>${robot.speed}</td>
+                                    <td>${robot.turn}</td>
+                                    <td>${robot.distance}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    `;
+                    container.insertAdjacentHTML('beforeend', tableHTML);
+                });
+            } catch(err) {
+                console.error('Error fetching robots:', err)
+            }
+        }
+
+        setInterval(fetchRobots, 1000);
+        fetchRobots();
+    </script>
 </body>
+
 </html>

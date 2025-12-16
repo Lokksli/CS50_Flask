@@ -2,6 +2,7 @@ from flask import Flask, render_template
 import sqlite3
 import serial
 import threading
+from flask import jsonify
 
 app = Flask(__name__)
 
@@ -10,11 +11,33 @@ DB_NAME = "parameters.db"
 SERIAL_PORT = "/dev/ttyUSB0"
 BAUD_RATE = 9600
 
-
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
+
+@app.route("/robots_data")
+def robots_data():
+    conn = get_db()
+    cursor = conn.cursor()
+
+    cursor.execute("SELECT name, speed, turn, fdistance FROM robots")
+    rows = cursor.fetchall()
+    conn.close()
+
+    robots = [
+        {
+            "name": row["name"],
+            "speed": row["speed"],
+            "turn": row["turn"],
+            "distance": row["fdistance"],
+        }
+        for row in rows
+    ]
+
+    return jsonify(robots)
+
+    
 
 
 def serial_listener():
@@ -71,24 +94,7 @@ def serial_listener():
 
 @app.route("/")
 def index():
-    conn = get_db()
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT name, speed, turn, fdistance FROM robots")
-    rows = cursor.fetchall()
-    conn.close()
-
-    robots = [
-        {
-            "name": row["name"],
-            "speed": row["speed"],
-            "turn": row["turn"],
-            "distance": row["fdistance"],
-        }
-        for row in rows
-    ]
-
-    return render_template("index.html", robots=robots)
+    return render_template("index.html")
 
 
 if __name__ == "__main__":
