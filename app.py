@@ -7,47 +7,67 @@ app = Flask(__name__)
 
 DB_NAME = "parameters.db"
 
-SERIAL_PORT = "COM5"
+SERIAL_PORT = "/dev/ttyUSB0"
 BAUD_RATE = 9600
+
 
 def get_db():
     conn = sqlite3.connect(DB_NAME)
     conn.row_factory = sqlite3.Row
     return conn
 
+
 def serial_listener():
-    ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
-    conn = get_db()
-    cursor = conn.cursor()
+    print("Starting serial listener...")
+
+    try:
+        ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+        print("CONNECTED TO:", ser.port)
+    except Exception as e:
+        print("SERIAL OPEN FAILED:", repr(e))
+        return
 
     while True:
-        line = ser.readline().decode(errors="ignore").strip()
-        if not line:
-            continue
-
         try:
-            name, speed, turn, distance = line.split(",")
-            speed = int(speed)
-            turn = int(turn)
-            distance = int(distance)
+            raw = ser.readline()
+            print("RAW BYTES:", raw)
 
-            cursor.execute(
-                """
+            line = raw.decode("utf-8", errors="ignore").strip()
+            print("LINE:", repr(line))
+
+            if not line:
+                continue
+
+            parts = line.split(",")
+            print("PARTS:", parts)
+
+            if len(parts) != 4:
+                print("BAD FORMAT")
+                continue
+
+            name, speed, turn, distance = parts
+
+            conn = get_db()
+            cur = conn.cursor()
+
+            cur.execute("""
                 INSERT INTO robots (name, speed, turn, fdistance)
                 VALUES (?, ?, ?, ?)
                 ON CONFLICT(name)
                 DO UPDATE SET
-                    speed = excluded.speed,
-                    turn = excluded.turn,
-                    fdistance = excluded.fdistance
-                """,
-                (name, speed, turn, distance)
-            )
-            conn.commit()
-            print("Updated:", name)
+                    speed=excluded.speed,
+                    turn=excluded.turn,
+                    fdistance=excluded.fdistance
+            """, (name, int(speed), int(turn), int(distance)))
 
-        except ValueError:
-            print("Bad serial data:", line)
+            conn.commit()
+            conn.close()
+
+            print("DB UPDATED:", name)
+
+        except Exception as e:
+            print("LOOP ERROR:", repr(e))
+
 
 @app.route("/")
 def index():
@@ -56,6 +76,7 @@ def index():
 
     cursor.execute("SELECT name, speed, turn, fdistance FROM robots")
     rows = cursor.fetchall()
+    conn.close()
 
     robots = [
         {
@@ -67,12 +88,9 @@ def index():
         for row in rows
     ]
 
-    conn.close()
     return render_template("index.html", robots=robots)
 
 
 if __name__ == "__main__":
     threading.Thread(target=serial_listener, daemon=True).start()
-    app.run(debug=True)
-
-
+    app.run(debug=True, use_reloader=False)
